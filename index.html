@@ -71,20 +71,21 @@
               <button id="check-status"
                       class="btn btn-primary input-group-btn btn-lg" >Check</button>
             </div>
-
-            <p>Your friend's status is: <span id="friend-status">...</span></p>
           </fieldset>
-
           <div class="card">
+            <hr id="friend-status" />
+          </div>
+
+          <div class="card" id="status-template">
           <div class="tile">
             <div class="chip">
               <div class="avatar avatar-lg">
                 <img src="https://robohash.org/dckc?size=48x48&amp;set=set3"
                      title="signed with KEY1FINGERPRINT"/>
                 <!-- abusing "online" a bit to mean "signed" -->
-                <i class="avatar-presence online"></i>
+                <!-- TODO: <i class="avatar-presence online"></i> -->
               </div>
-              dckc
+              <span class="name">dckc</span>
             </div>
             <p class="tile-subtitle">doing cool stuff...</p>
           </div>
@@ -124,6 +125,7 @@ window.addEventListener("DOMContentLoaded", () => {
     statusSign: byId("sign-status"),
     friendBox: byId("friend-name"),
     checkButton: byId("check-status"),
+    statusTemplate: byId("status-template"),
     friendStatusP: byId("friend-status"),
     proposeButton: byId("propose"),
     problem: byId("problem"),

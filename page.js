@@ -10,8 +10,6 @@ import {
 } from './sigui/messageBus.js';
  */
 
-import { fromJSData, toRholang } from './sigui/RHOCore.js';
-
 const def = Object.freeze;
 
 // combination of rchain domain and randomly chosen data.
@@ -114,13 +112,27 @@ export default function statusPage(ui /*: any*/, port /*: BusPort */, fetch /*: 
     () => fetch(urlEncode`/users/${friendName()}/status`)
       .then((res) => {
         res.json().then(({ status }) => {
-          ui.showText(ui.friendStatusP, status);
+          appendStatus(friendName(), status);
         });
         return res;
       }),
     () => `get status for ${friendName()}`,
   );
 
+  function appendStatus(who, status) {
+    // TODO: green dot for signed status
+    const deep = true;
+    const card = ui.statusTemplate.cloneNode(deep);
+    card.querySelector('.tile-subtitle').textContent = status;
+    card.querySelector('.avatar > img').setAttribute(
+      'src', urlEncode`https://robohash.org/${who}?size=48x48&amp;set=set3`,
+    );
+    card.querySelector('.chip > .name').textContent = who;
+    const scroll = ui.friendStatusP;
+    scroll.parentNode.insertBefore(card, scroll.nextSibling);
+  }
+  appendStatus('mickey mouse', 'signing');
+  appendStatus('donald duck', 'quacking');
 
   /**
    * Attach remote action to button.
