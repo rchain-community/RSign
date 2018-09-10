@@ -7,7 +7,9 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --format unix --ignore-pattern node_modules/ *.js",
+    "check": "flow check"
   },
   "repository": {
     "type": "git",
@@ -23,5 +25,12 @@
   "bugs": {
     "url": "https://github.com/dckc/RSign/issues"
   },
-  "homepage": "https://github.com/dckc/RSign#readme"
+  "homepage": "https://github.com/dckc/RSign#readme",
+  "devDependencies": {
+    "eslint": "^5.4.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "flow-bin": "^0.80.0",
+    "flow-interfaces-chrome": "^0.5.1"
+  }
 }
