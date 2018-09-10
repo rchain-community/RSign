@@ -1,0 +1,27 @@
+{
+  "name": "rsign",
+  "version": "0.2.0",
+  "description": "RChain Signature Extension",
+  "main": "sigTool.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dckc/RSign.git"
+  },
+  "keywords": [
+    "RChain",
+    "smart-contract",
+    "browser-extension"
+  ],
+  "author": "Dan Connolly",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dckc/RSign/issues"
+  },
+  "homepage": "https://github.com/dckc/RSign#readme"
+}
