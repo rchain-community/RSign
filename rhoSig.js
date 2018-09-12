@@ -121,13 +121,12 @@ export default function popup(
 
 
 function oneWayProxy(name, port, tabId) /*: FarRef2 */{
-  const ignoreReply = () => null;
-
   function invokeRef(method, refs, ...args) {
     const msg /*: BusMessage */ = { method, refs, args, target: name, kind: 'invoke' };
-    console.log('rhoSig oneWayProxy sending', msg.method, msg);
-    port.sendMessage(tabId, msg, ignoreReply);
-    return Promise.reject(new TypeError('one way!'));
+    return new Promise((resolve, reject) => {
+      console.log('rhoSig oneWayProxy sending', msg.method, msg);
+      port.sendMessage(tabId, msg, () => resolve());
+    });
   }
   return def({ invokeRef });
 }
