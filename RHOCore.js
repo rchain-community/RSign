@@ -94,11 +94,11 @@ export function toRholang(par /*: IPar */) /*: string */ {
       if (typeof ex.g_string !== 'undefined') {
         return src(ex.g_string);
       }
-      if (Array.isArray(ex.e_list_body)) {
+      if (typeof ex.e_list_body !== 'undefined' && Array.isArray(ex.e_list_body.ps)) {
         const items /*: string[] */= (ex.e_list_body.ps || []).map(recur);
         return `[${items.join(', ')}]`;
       }
-      throw new Error(`not RHOCore? ${ex.toString()}`);
+      throw new Error(`not RHOCore? ${JSON.stringify(ex)}`);
     } else if (p.sends) {
       const ea = s => `@${recur((s.chan || {}).quote || {})}!(${(s.data || []).map(recur).join(', ')})`;
       return p.sends.map(ea).join(' | ');
