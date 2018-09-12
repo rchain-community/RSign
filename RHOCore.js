@@ -1,5 +1,6 @@
-// @flow
+// @flow strict
 
+// ISSUE: generated code isn't annotated. $FlowFixMe
 import { Par } from './lib/RhoTypes.js';
 
 /**
@@ -11,10 +12,10 @@ import { Par } from './lib/RhoTypes.js';
  * @param x Any javascript object to be serialized to RHOCore
  * @return A rholang term representing the object in RHOCore form.
  */
-export function fromJSData(data /*: any */) {
-  const expr1 = kv => ({ exprs: [kv] });
+export function fromJSData(data /*: mixed */) /* : IPar */ {
+  function expr1(kv /*: IPar*/) { return { exprs: [kv] }; }
 
-  function recur(x) /*: Par*/ {
+  function recur(x) {
     switch (typeof x) {
       case 'boolean':
         return expr1({ g_bool: x, expr_instance: 'g_bool' });
@@ -32,11 +33,11 @@ export function fromJSData(data /*: any */) {
         }
         return keysValues(x);
       default:
-        throw new Error(`no mapping to RHOCore for ${typeof x}`);
+        throw new TypeError(`no mapping to RHOCore for ${typeof x}`);
     }
   }
 
-  function toArry(items) {
+  function toArry(items /*: JsonArray */) {
     // [1, 2, 2] is a process with one exprs, which is a list
     // The list has one 3 items, each of which is a process
     // with one exprs, which is an int.
@@ -47,8 +48,8 @@ export function fromJSData(data /*: any */) {
   }
 
   function keysValues(obj) {
-    const sends = Object.keys(obj).sort().map((k) => {
-      const chan = { quote: expr1({ g_string: k, expr_instance: 'g_string' }) };
+    const sends /*: ISend[] */ = Object.keys(obj).sort().map((k) => {
+      const chan /*: IChannel */ = { quote: expr1({ g_string: k, expr_instance: 'g_string' }) };
       return { chan, data: [recur(obj[k])] };
     });
     return { sends };
@@ -60,10 +61,8 @@ export function fromJSData(data /*: any */) {
 
 /**
  * Turns a rholang term into a byte-array compatible with Rholang
- * @param termObj a rholang term object
- * @return The byte-array
  */
-export function toByteArray(termObj /*: Par */) {
+export function toByteArray(termObj /*: IPar */) /*: Uint8Array */ {
   // Par.verify(termObj);
   return Par.encode(termObj).finish();
 }
@@ -74,8 +73,10 @@ export function toByteArray(termObj /*: Par */) {
  *
  * @param par A RHOCore representation of a Rholang term
  * @return A rholang string
+ *
+ * ISSUE: Use intersection types to constrain par param further than IPar?
  */
-export function toRholang(par /*: Par */) {
+export function toRholang(par /*: IPar */) /*: string */ {
   const src = x => JSON.stringify(x);
 
   function recur(p) {
@@ -84,22 +85,22 @@ export function toRholang(par /*: Par */) {
         throw new Error(`${p.exprs.length} exprs not part of RHOCore`);
       }
       const ex = p.exprs[0];
-      if (ex.expr_instance === 'g_bool') {
+      if (typeof ex.g_bool !== 'undefined') {
         return src(ex.g_bool);
       }
-      if (ex.expr_instance === 'g_int') {
+      if (typeof ex.g_int !== 'undefined') {
         return src(ex.g_int);
       }
-      if (ex.expr_instance === 'g_string') {
+      if (typeof ex.g_string !== 'undefined') {
         return src(ex.g_string);
       }
-      if (ex.expr_instance === 'e_list_body') {
-        const items = ex.e_list_body.ps.map(recur).join(', ');
-        return `[${items}]`;
+      if (Array.isArray(ex.e_list_body)) {
+        const items /*: string[] */= (ex.e_list_body.ps || []).map(recur);
+        return `[${items.join(', ')}]`;
       }
-      throw new Error(`not RHOCore? ${ex}`);
+      throw new Error(`not RHOCore? ${ex.toString()}`);
     } else if (p.sends) {
-      const ea = s => `@${recur(s.chan.quote)}!(${s.data.map(recur).join(', ')})`;
+      const ea = s => `@${recur((s.chan || {}).quote || {})}!(${(s.data || []).map(recur).join(', ')})`;
       return p.sends.map(ea).join(' | ');
     } else {
       // TODO: check that everything else is empty

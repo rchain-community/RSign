@@ -9,7 +9,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --format unix --ignore-pattern node_modules/ *.js",
-    "check": "flow check"
+    "coverage": "flow-coverage-report -i '*.js' -x 'node_modules/**' -t html -t json -t text --threshold 90",
+    "check": "flow status --from emacs"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,10 @@
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.14.0",
     "flow-bin": "^0.80.0",
+    "flow-coverage-report": "^0.6.0",
     "flow-interfaces-chrome": "^0.5.1"
+  },
+  "dependencies": {
+    "tweetnacl": "^1.0.0"
   }
 }

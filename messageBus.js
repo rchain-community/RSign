@@ -1,6 +1,6 @@
 /** messageBus - message passing data structures
+@flow strict
  */
-// @flow
 
 /*::
 export interface BusPort {
@@ -9,11 +9,11 @@ export interface BusPort {
 }
 
 export interface FarRef {
-  invoke(method: string, locals: Array<FarRef>, ...args: Array<any>): Promise<any>
+  invoke(method: string, locals: Array<FarRef>, ...args: Array<mixed>): Promise<mixed>
 }
 
 export interface FarRef2 {
-  invokeRef(method: string, refs: Array<string>, ...args: Array<any>): Promise<any>
+  invokeRef(method: string, refs: Array<string>, ...args: Array<mixed>): Promise<mixed>
 }
 
 export type BusMessage = {
@@ -42,15 +42,58 @@ export interface BusTarget {
 }
 
 export interface BusDelayedTarget {
-  receive(msg: BusMessage, cb: (BusReply) => void): boolean | void
+  receive(msg: BusMessage, cb: (BusReply) => void): true | void
 }
 
 type PendingWork = {
-  resolve: (v: any) => void,
+  resolve: (v: mixed) => void,
   reject: (messge: string) => void
 }
  */
 
 export default function messageBus(_port /*: BusPort */, _label /*: string*/) {
   throw new TypeError('not implemented');
+}
+
+export function asStr(x /*: mixed*/) /*: string */ {
+  if (typeof x !== 'string') { return ''; }
+  return x;
+}
+
+export function objGuard(x /*: mixed */) /*: { [string]: mixed } */ {
+  if (typeof x !== 'object') { return {}; }
+  if (x === null) { return {}; }
+  return x;
+}
+
+function arrayOf/*:: <T>*/(x /*: mixed */, subGuard /*: (mixed) => T */) /*: Array<T> */ {
+  if (!(Array.isArray(x))) { return []; }
+  return x.map(subGuard);
+}
+
+
+export function asBusMessage(x /*: mixed */) /*: BusMessage */ {
+  const msg = objGuard(x);
+  if (msg.kind !== 'invoke') { throw new TypeError('expected invoke'); }
+
+  return {
+    kind: 'invoke',
+    target: asStr(msg.target),
+    method: asStr(msg.method),
+    refs: arrayOf(msg.refs, asStr),
+    args: arrayOf(msg.args, arg => arg),
+  };
+}
+
+
+export function asBusReply(x /*: mixed */) /*: BusReply */ {
+  const msg = objGuard(x);
+  switch (msg.kind) {
+    case 'success':
+      return { kind: 'success', result: msg.result };
+    case 'failure':
+      return { kind: 'failure', message: asStr(msg.message) };
+    default:
+      throw new TypeError(`bad message kind: ${String(msg.kind)}`);
+  }
 }

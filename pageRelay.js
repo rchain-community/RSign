@@ -2,7 +2,9 @@
 // https://eips.ethereum.org/EIPS/eip-1102
 // https://github.com/MetaMask/metamask-extension/pull/4703
 
-// @flow
+// @flow strict
+
+import { asBusMessage, asBusReply } from './messageBus.js';
 
 const def = Object.freeze;
 
@@ -13,16 +15,18 @@ import { type BusTarget, type BusMessage, type BusReply, type BusPort } from './
 // combination of rchain domain and randomly chosen data.
 const RCHAIN_SIGNING = 'rchain.coop/6kbIdoB2';
 
-function startRelay(runtime /*: typeof chrome.runtime*/, pgPort /*: BusPort*/) {
+function startRelay(runtime /*: chrome$runtime*/, pgPort /*: BusPort*/) {
   console.log('startRelay...');
 
   const toPage = oneWayForwarder(`${RCHAIN_SIGNING}/page`, pgPort);
 
-  // ISSUE: Callback declaration for runtime.onMessage in flow-interfaces-chrome
-  // isn't right.
-  const { onMessage } = (runtime /*:any*/);
-  onMessage.addListener((msg, _sender, _sendResponse) => {
-    toPage.receive(msg);
+  runtime.onMessage.addListener((x, _sender, _sendResponse) => {
+    try {
+      const msg = asBusMessage(x);
+      toPage.receive(msg);
+    } catch (_) {
+      // never mind
+    }
   });
 
   const toPopup = callbackForwarder(`${RCHAIN_SIGNING}/popup`, runtime, pgPort);
@@ -34,13 +38,13 @@ function startRelay(runtime /*: typeof chrome.runtime*/, pgPort /*: BusPort*/) {
 
 
 // ISSUE: belongs in messageBus.js?
-function callbackForwarder(name, destPort, srcPort) {
+function callbackForwarder(name, destPort, srcPort) /*: BusTarget*/ {
   function receive(msg) {
     if (msg.target !== name) { return false; }
     console.log('forwarder sending to runtime', msg);
-    destPort.sendMessage(msg, (response) => {
+    destPort.sendMessage(msg, (response /*: mixed */) => {
       console.log('forwarder forwarding reply from runtime', response);
-      srcPort.postMessage(response);
+      srcPort.postMessage(asBusReply(response));
     });
     return true;
   }
@@ -49,10 +53,10 @@ function callbackForwarder(name, destPort, srcPort) {
 
 
 // ISSUE: belongs in messageBus.js?
-function oneWayForwarder(name, port) {
+function oneWayForwarder(name, port) /*: BusTarget*/ {
   function receive(maybeMsg) {
     const msg = maybeMsg || {};
-    if (msg.target !== name) { return; }
+    if (msg.target !== name) { return false; }
 
     const pgInvoke /*: BusMessage */ = {
       kind: 'invoke',
@@ -64,6 +68,7 @@ function oneWayForwarder(name, port) {
 
     console.log('pageRelay relaying', pgInvoke.method, pgInvoke);
     port.postMessage(pgInvoke);
+    return true;
   }
 
   return def({ receive });

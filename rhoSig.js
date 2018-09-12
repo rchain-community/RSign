@@ -1,10 +1,12 @@
 /** rhoSig -- RHOCore signing UI
-@flow
+@flow strict
 */
 
 import { fromJSData, toByteArray, toRholang } from './RHOCore.js';
 
 import { sigTool, localStorage, input } from './sigTool.js';
+
+import { asBusMessage } from './messageBus.js';
 
 const def = Object.freeze;
 const RCHAIN_SIGNING = 'rchain.coop/6kbIdoB2';
@@ -18,13 +20,16 @@ import {
   type FarRef2,
 } from './messageBus.js';
 
-import type Nacl from './lib/nacl-fast.min.js';
 */
 
-export default function popup(document /*: Document*/, ua /*: UserAgent */, nacl /*: Nacl*/) {
+export default function popup(
+  document /*: Document*/,
+  ua /*: UserAgent */,
+  nacl /*: typeof nacl*/,
+) {
   const tool = sigTool(localStorage(ua), nacl);
-  const die = (id) => { throw new TypeError(`coding bug: no such id ${id}`); };
-  const byId = id => document.getElementById(id) || die(id);
+  function the/*:: <T>*/(x /*: ?T*/) /*: T*/ { if (!x) { throw new Error(x); } return x; }
+  const byId = id => the(document.getElementById(id));
 
   /**
    * Signature request from page
@@ -43,6 +48,7 @@ export default function popup(document /*: Document*/, ua /*: UserAgent */, nacl
   function signProcess(par, password) {
     return tool.getKey()
       .then((signingKey) => {
+        if (signingKey === null) { return null; }
         const message = toByteArray(par);
 
         const sig = tool.signMessage(message, signingKey, password);
@@ -54,7 +60,7 @@ export default function popup(document /*: Document*/, ua /*: UserAgent */, nacl
       });
   }
 
-  function lose(doing, exception) {
+  function lose(doing, exception /*: Error*/) {
     const message = `failed ${doing}: ${exception.message}`;
     byId('status').textContent = message;
 
@@ -65,7 +71,9 @@ export default function popup(document /*: Document*/, ua /*: UserAgent */, nacl
     console.log(exception);
   }
 
-  function showPubKey({ label, pubKey } /*: SigningKey*/) {
+  function showPubKey(maybeKey /*: SigningKey | null*/) {
+    if (!maybeKey) { return; }
+    const { label, pubKey } = maybeKey;
     /* Assigning to params is the norm for DOM stuff. */
     /* eslint-disable no-param-reassign */
     input(byId('label')).value = label;
@@ -90,7 +98,7 @@ export default function popup(document /*: Document*/, ua /*: UserAgent */, nacl
       byId('rholang').textContent = toRholang(par);
       signProcess(par, input(byId('password')).value)
         .then((sig) => {
-          input(byId('sig')).value = sig;
+          input(byId('sig')).value = sig || '?? no key on file??';
         })
         .catch(oops => lose('get key', oops));
     });
@@ -103,10 +111,10 @@ export default function popup(document /*: Document*/, ua /*: UserAgent */, nacl
       toPage.invokeRef('offer', [selfRef]);
     });
 
-    // ISSUE: flow-interfaces-chrome doesn't realize sendResponse takes an arg
-    const { onMessage } = (ua.chrome.runtime /*:any*/);
-    onMessage.addListener(
-      (msg, _sender, sendResponse) => self.receive(msg, sendResponse),
+    ua.chrome.runtime.onMessage.addListener(
+      // ISSUE: flow-interfaces-chrome doesn't realize sendResponse takes an arg
+      // $FlowFixMe
+      (msg, _sender, sendResponse) => self.receive(asBusMessage(msg), sendResponse),
     );
   });
 }
@@ -125,7 +133,13 @@ function oneWayProxy(name, port, tabId) /*: FarRef2 */{
 }
 
 
-function promiseProxy(name, obj) /*: BusDelayedTarget */ {
+/*::
+// A proxy has all async methods.
+// Its first arg is an array of place-holder refs to non-Serializable objects.
+type Proxy = { [string]: (refs: string[], ...mixed[]) => Promise<mixed> }
+*/
+
+function promiseProxy(name, obj /*: Proxy */) /*: BusDelayedTarget */ {
   function receive({ target, method, refs, args }, sendResponse) {
     if (target !== name) { return undefined; }
     if (!(method in obj)) { return undefined; } // ISSUE: reply with error?
@@ -136,7 +150,7 @@ function promiseProxy(name, obj) /*: BusDelayedTarget */ {
         const win /*: BusReply */ = { result, kind: 'success' };
         sendResponse(win);
       })
-      .catch(({ message }) => {
+      .catch(({ message } /*: { message: string } */) => {
         const fail /*: BusReply */ = { message, kind: 'failure' };
         sendResponse(fail);
       });

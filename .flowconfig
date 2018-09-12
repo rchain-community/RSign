@@ -5,9 +5,15 @@
 [libs]
 # https://github.com/Shraymonks/flow-interfaces-chrome/
 node_modules/flow-interfaces-chrome/interfaces/
+lib/interfaces/
 
 [lints]
 
 [options]
 
 [strict]
+nonstrict-import
+unclear-type
+unsafe-getters-setters
+untyped-import
+untyped-type-import

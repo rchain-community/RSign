@@ -1,14 +1,14 @@
 /** sigTool -- signing key generation, storage, and usage
-@flow
+@flow strict
  */
 
 /* global unescape, encodeURIComponent, HTMLInputElement, HTMLTextAreaElement */
 
+import { asStr } from './messageBus.js';
+
 const def = Object.freeze;
 
 /*::
-
-import type Nacl from './lib/nacl-fast.min.js';
 
 // SigningKey is the format we use to save the key pair
 // with the secret key encrypted.
@@ -26,15 +26,15 @@ interface SigTool {
   // Generate and save key.
   generate({ label: string, password: string }): Promise<SigningKey>,
   // Get stored key.
-  getKey(): Promise<SigningKey>,
+  getKey(): Promise<SigningKey | null>,
   // Decrypt private key and use it to sign message.
   signMessage(message: Uint8Array, signingKey: SigningKey, password: string): string
 }
 
 // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/StorageArea
 interface StorageArea {
-  get(key: string): Promise<Object>,
-  set(items: Object): Promise<void>
+  get(key: string): Promise<{ [string]: mixed }>,
+  set(items: { [string]: mixed }): Promise<void>
 }
 
 // Toward a portable chrome/firefox API (WIP).
@@ -49,11 +49,11 @@ export type UserAgent = {
 
 */
 
-export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: Nacl*/) {
-  const die = (id) => { throw new Error(id); };
-  const byId = id => document.getElementById(id) || die(id);
+export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: typeof nacl*/) {
+  function the/*:: <T>*/(x /*: ?T*/) /*: T*/ { if (!x) { throw new Error(x); } return x; }
+  const byId = id => the(document.getElementById(id));
 
-  function lose(doing, exc) {
+  function lose(doing, exc /*: Error */) {
     byId('status').textContent = `failed ${doing}: ${exc.message}`;
     console.log(exc);
   }
@@ -77,7 +77,9 @@ export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: Na
   });
 
 
-  function showPubKey({ label, pubKey } /*: SigningKey*/) {
+  function showPubKey(maybeKey /*: SigningKey | null*/) {
+    if (!maybeKey) { return; }
+    const { label, pubKey } = maybeKey;
     /* Assigning to params is the norm for DOM stuff. */
     /* eslint-disable no-param-reassign */
     input(byId('label')).value = label;
@@ -112,9 +114,25 @@ export function localStorage({ browser, chrome } /*: UserAgent*/) /*: StorageAre
 }
 
 
-export function sigTool(local /*: StorageArea */, nacl /*: Nacl*/) /*: SigTool */ {
-  function getKey() /*: Promise<SigningKey> */{
-    return local.get('signingKey').then(({ signingKey }) => ((signingKey /*:any*/)/*: SigningKey*/));
+export function sigTool(local /*: StorageArea */, nacl /*: typeof nacl*/) /*: SigTool */ {
+  function getKey() /*: Promise<SigningKey | null> */{
+    return local.get('signingKey').then(({ signingKey }) => chkKey(signingKey));
+  }
+
+  function chkKey(it /*: mixed*/) /*: SigningKey | null */ {
+    if (it === null) { return null; }
+    if (typeof it !== 'object') { return null; }
+    const { secretKey } = it;
+    if (!secretKey || typeof secretKey !== 'object') { return null; }
+    const { nonce } = secretKey;
+    if (typeof nonce !== 'string') { return null; }
+    const { cipherText } = secretKey;
+    if (typeof cipherText !== 'string') { return null; }
+    return {
+      label: asStr(it.label),
+      secretKey: { nonce, cipherText },
+      pubKey: asStr(it.pubKey),
+    };
   }
 
   function generate({ label, password }) {
@@ -138,11 +156,11 @@ export function sigTool(local /*: StorageArea */, nacl /*: Nacl*/) /*: SigTool *
   /**
    * Hash text password to get bytes for secretbox key.
    */
-  function passKey(password) {
+  function passKey(password /*: string*/) /*: Uint8Array */{
     return nacl.hash(utf8(password)).slice(0, nacl.secretbox.keyLength);
   }
 
-  function encryptWithNonce(message, key) {
+  function encryptWithNonce(message /*: Uint8Array */, key) {
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
     const cipherText = nacl.secretbox(message, nonce, key);
     return { cipherText, nonce };
@@ -157,7 +175,7 @@ export function sigTool(local /*: StorageArea */, nacl /*: Nacl*/) /*: SigTool *
     const box = h2b(signingKey.secretKey.cipherText);
     const secretKey = nacl.secretbox.open(box, nonce, passKey(password));
 
-    if (!secretKey) {
+    if (secretKey === null) {
       throw new Error('bad password');
     }
 
@@ -182,7 +200,7 @@ export function sigTool(local /*: StorageArea */, nacl /*: Nacl*/) /*: SigTool *
  */
 function asPromise/*:: <T>*/(
   chrome /*: typeof chrome*/,
-  calling /*: (cb: (T) => void) => any */,
+  calling /*: (cb: (T) => void) => mixed */,
 ) /*: Promise<T> */{
   function executor(resolve, reject) {
     function callback(result /*: T*/) {
@@ -207,7 +225,7 @@ function utf8(s /*: string*/) /*: Uint8Array*/ {
 
 
 // ack: https://gist.github.com/tauzen/3d18825ae41ff3fc8981
-function b2h(uint8arr) {
+function b2h(uint8arr /*: Uint8Array*/) /*: string */{
   if (!uint8arr) {
     return '';
   }
