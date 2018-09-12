@@ -11,8 +11,8 @@ Share and Enjoy under the terms of the Apache Software License.
 Provided it's installed as below:
 
   1. Create a key pair
-     a. Right click to bring up options
-     b. Provide label and password; click Generate...
+     1. Right click to bring up options
+     2. Provide label and password; click Generate...
   2. Pop-up the extension
   3. Put JSON in the data field
   4. Enter password
