@@ -2,11 +2,10 @@
 @flow strict
 */
 
+import { fromJSData, toByteArray, toRholang } from 'rchain-api/RHOCore';
+
 import { sigTool, localStorage, input } from './sigTool.js';
-
 import { asBusMessage } from './messageBus.js';
-
-const { fromJSData, toByteArray, toRholang } = require('../node_modules/rchain-api/RHOCore.js');
 
 const def = Object.freeze;
 const RCHAIN_SIGNING = 'rchain.coop/6kbIdoB2';

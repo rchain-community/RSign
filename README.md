@@ -26,8 +26,13 @@ signatures. For example, see
 [Rchain-Status](https://github.com/dckc/Rchain-Status/tree/sig-ext).
 
 
-## Installation
+## Installation as Chrome Extension
 
-In Chrome or Chromium, use [load unpacked][1].
+Only Chrome (and Chromium) are supported to date. Firefox support is
+planned.
+
+ 1. `npm install` to get runtime dependencies and dev tools
+ 2. `npm run build` to link modules
+ 3. Use [load unpacked][1].
 
 [1]: https://developer.chrome.com/extensions/getstarted#unpacked
