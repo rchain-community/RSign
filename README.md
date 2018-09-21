@@ -31,8 +31,4 @@ signatures. For example, see
 Only Chrome (and Chromium) are supported to date. Firefox support is
 planned.
 
- 1. `npm install` to get runtime dependencies and dev tools
- 2. `npm run build` to link modules
- 3. Use [load unpacked][1].
-
-[1]: https://developer.chrome.com/extensions/getstarted#unpacked
+Download the latest `.crx` file from https://github.com/dckc/RSign/releases .

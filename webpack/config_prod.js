@@ -1,4 +1,12 @@
+// inspired by https://github.com/salsita/chrome-extension-skeleton/blob/master/webpack/webpack.config.prod.js
+
 const path = require('path');
+
+const Crx = require('crx-webpack-plugin');
+
+const pkg = require('../package.json');
+
+const appName = `${pkg.name}-${pkg.version}`;
 
 module.exports = {
   mode: 'production',
@@ -15,5 +23,13 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, '../dist')
-  }
+  },
+  plugins: [
+    new Crx({
+      keyFile: '../.ssh/RSign-dckc.pem',
+      contentPath: '../dist/',
+      outputPath: '../dist/',
+      name: appName,
+    })
+  ]
 };

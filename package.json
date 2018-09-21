@@ -1,6 +1,6 @@
 {
   "name": "rsign",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "RChain Signature Extension",
   "main": "sigTool.js",
   "directories": {
@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/dckc/RSign#readme",
   "devDependencies": {
+    "crx-webpack-plugin": "^0.1.5",
     "eslint": "^5.4.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.14.0",
