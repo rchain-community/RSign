@@ -27,7 +27,6 @@ export default function popup(
   ua /*: UserAgent */,
   nacl /*: typeof nacl*/,
 ) {
-  console.log('@@popup', { document, ua, nacl });
   const tool = sigTool(localStorage(ua), nacl);
   function the/*:: <T>*/(x /*: ?T*/) /*: T*/ { if (!x) { throw new Error(x); } return x; }
   const byId = id => the(document.getElementById(id));
@@ -73,7 +72,6 @@ export default function popup(
   }
 
   function showPubKey(maybeKey /*: SigningKey | null*/) {
-    console.log('@@showPubKey', { maybeKey });
     if (!maybeKey) { return; }
     const { label, pubKey } = maybeKey;
     /* Assigning to params is the norm for DOM stuff. */
@@ -83,7 +81,6 @@ export default function popup(
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('@@popup DOMContentLoaded');
     tool.getKey()
       .then(showPubKey)
       .catch(oops => lose('get key', oops));
@@ -120,8 +117,6 @@ export default function popup(
       (msg, _sender, sendResponse) => self.receive(asBusMessage(msg), sendResponse),
     );
   });
-
-  console.log('@@popup done');
 }
 
 
@@ -147,7 +142,6 @@ function promiseProxy(name, obj /*: Proxy */) /*: BusDelayedTarget */ {
   function receive({ target, method, refs, args }, sendResponse) {
     if (target !== name) { return undefined; }
     if (!(method in obj)) { return undefined; } // ISSUE: reply with error?
-    console.log('@@rhoSig promiseProxy received invoke', method);
 
     obj[method](refs, ...args)
       .then((result) => {
