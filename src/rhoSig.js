@@ -2,11 +2,11 @@
 @flow strict
 */
 
-import { fromJSData, toByteArray, toRholang } from './RHOCore.js';
-
 import { sigTool, localStorage, input } from './sigTool.js';
 
 import { asBusMessage } from './messageBus.js';
+
+const { fromJSData, toByteArray, toRholang } = require('../node_modules/rchain-api/RHOCore.js');
 
 const def = Object.freeze;
 const RCHAIN_SIGNING = 'rchain.coop/6kbIdoB2';
@@ -27,6 +27,7 @@ export default function popup(
   ua /*: UserAgent */,
   nacl /*: typeof nacl*/,
 ) {
+  console.log('@@popup', { document, ua, nacl });
   const tool = sigTool(localStorage(ua), nacl);
   function the/*:: <T>*/(x /*: ?T*/) /*: T*/ { if (!x) { throw new Error(x); } return x; }
   const byId = id => the(document.getElementById(id));
@@ -72,6 +73,7 @@ export default function popup(
   }
 
   function showPubKey(maybeKey /*: SigningKey | null*/) {
+    console.log('@@showPubKey', { maybeKey });
     if (!maybeKey) { return; }
     const { label, pubKey } = maybeKey;
     /* Assigning to params is the norm for DOM stuff. */
@@ -81,6 +83,7 @@ export default function popup(
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('@@popup DOMContentLoaded');
     tool.getKey()
       .then(showPubKey)
       .catch(oops => lose('get key', oops));
@@ -117,13 +120,15 @@ export default function popup(
       (msg, _sender, sendResponse) => self.receive(asBusMessage(msg), sendResponse),
     );
   });
+
+  console.log('@@popup done');
 }
 
 
 function oneWayProxy(name, port, tabId) /*: FarRef2 */{
   function invokeRef(method, refs, ...args) {
     const msg /*: BusMessage */ = { method, refs, args, target: name, kind: 'invoke' };
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       console.log('rhoSig oneWayProxy sending', msg.method, msg);
       port.sendMessage(tabId, msg, () => resolve());
     });

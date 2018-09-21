@@ -16,11 +16,6 @@
           <input id="pubKey" readonly="readonly" /></label></div>
     </fieldset>
     <div id="status"></div>
-<!-- issue: how to use nacl as a module from the browser? -->
-<script src="lib/nacl-fast.min.js"></script>
-<script type="module">
-import { options } from './sigTool.js';
-options(document, { chrome: window.chrome, browser: window.browser }, nacl);
-</script>
+    <script type="module" src="options.js"></script>
   </body>
 </html>

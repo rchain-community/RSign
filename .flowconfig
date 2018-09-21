@@ -1,10 +1,15 @@
 [ignore]
 
 [include]
+src/
 
 [libs]
 # https://github.com/Shraymonks/flow-interfaces-chrome/
 node_modules/flow-interfaces-chrome/interfaces/
+
+node_modules/rchain-api/interfaces/
+node_modules/rchain-api/protobuf/interfaces/
+
 lib/interfaces/
 
 [lints]
