@@ -12,7 +12,7 @@
     "build": "webpack --config webpack/config_prod.js",
     "lint": "eslint --format unix src/",
     "coverage": "flow-coverage-report -i '*.js' -x 'node_modules/**' -t html -t json -t text --threshold 90",
-    "check": "flow status --from emacs"
+    "typecheck": "flow status --from emacs"
   },
   "repository": {
     "type": "git",
