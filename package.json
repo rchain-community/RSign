@@ -41,7 +41,7 @@
     "webpack-cli": "^3.1.0"
   },
   "dependencies": {
-    "rchain-api": "github:dckc/RChain-API#082fe5c985d5a9ed78c35455bee46d950a3a5c52",
+    "rchain-api": "github:dckc/rchain-api-1#a10c826",
     "tweetnacl": "^1.0.0"
   }
 }
