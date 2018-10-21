@@ -1,6 +1,6 @@
 {
   "name": "rsign",
-  "version": "0.4.0",
+  "version": "0.7.1",
   "description": "RChain Signature Extension",
   "main": "sigTool.js",
   "directories": {
