@@ -42,6 +42,6 @@
   },
   "dependencies": {
     "rchain-api": "github:dckc/rchain-api-1#a10c826",
-    "tweetnacl": "^1.0.0"
+    "tweetnacl": "^1.0.3"
   }
 }
