@@ -27,7 +27,9 @@
   },
   "content_scripts": [
     {
-      "js": ["pageRelay.js"],
+      "js": [
+        "pageRelay.js"
+      ],
       "matches": [
         "http://localhost:8080/*",
         "http://127.0.0.1:8080/*",

@@ -9,7 +9,5 @@ module.exports = {
     options: './src/optionsLoad.js',
     pageRelay: './src/pageRelay.js',
   },
-  output: {
-    path: path.resolve(__dirname, '../dist')
-  }
+  output: { path: path.resolve(__dirname, '../dist') },
 };
