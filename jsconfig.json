@@ -1,0 +1,22 @@
+// This file can contain .js-specific Typescript compiler config.
+// cribbed from https://github.com/extend-chrome/messages/blob/master/tsconfig.d.json
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "lib": [
+      "es2017",
+      "dom",
+      "esnext.array"
+    ],
+    "noEmit": true,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+  },
+  "include": [
+    "src/**/*.js",
+  ],
+  "typeAcquisition": {
+    "enable": true
+  }
+}
