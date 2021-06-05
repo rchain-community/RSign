@@ -2,7 +2,7 @@
 @flow strict
 */
 
-import { fromJSData, toByteArray, toRholang } from 'rchain-api/RHOCore';
+// import { fromJSData, toByteArray, toRholang } from 'rchain-api/RHOCore';
 
 import { sigTool, localStorage, input } from './sigTool.js';
 import { asBusMessage } from './messageBus.js';

@@ -47,8 +47,8 @@
     "webpack-cli": "^4.7.0"
   },
   "dependencies": {
-    "rchain-api": "github:dckc/rchain-api-1#a10c826",
     "@types/chrome": "^0.0.144",
+    "rchain-api": "github:rchain-community/rchain-api",
     "tweetnacl": "^1.0.0"
   },
   "eslintConfig": {
