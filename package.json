@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dckc/RSign.git"
+    "url": "git+https://github.com/rchain-community/RSign.git"
   },
   "keywords": [
     "RChain",
@@ -26,9 +26,9 @@
   "author": "Dan Connolly",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/dckc/RSign/issues"
+    "url": "https://github.com/rchain-community/RSign/issues"
   },
-  "homepage": "https://github.com/dckc/RSign#readme",
+  "homepage": "https://github.com/rchain-community/RSign#readme",
   "devDependencies": {
     "crx-webpack-plugin": "^0.1.5",
     "eslint": "^5.4.0",
