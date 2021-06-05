@@ -1,6 +1,6 @@
 /** sigTool -- signing key generation, storage, and usage
-@flow strict
  */
+// @ts-check
 
 /* global unescape, encodeURIComponent, HTMLInputElement, HTMLTextAreaElement */
 
@@ -8,19 +8,20 @@ import { asStr } from './messageBus.js';
 
 const def = Object.freeze;
 
-/*::
+/**
+ * SigningKey is the format we use to save the key pair
+ * with the secret key encrypted.
+ * @typedef {{
+ *   label: string,
+ *   secretKey: { // ISSUE: opaque type for hex?
+ *     nonce: string,
+ *     cipherText: string,
+ *   },
+ *   pubKey: string
+ * }} SigningKey
+ */
 
-// SigningKey is the format we use to save the key pair
-// with the secret key encrypted.
-export type SigningKey = {
-  label: string,
-  secretKey: {
-    // ISSUE: opaque type for hex?
-    nonce: string,
-    cipherText: string,
-  },
-  pubKey: string
-}
+/*::
 
 interface SigTool {
   // Generate and save key.
@@ -115,7 +116,10 @@ export function localStorage({ browser, chrome } /*: UserAgent*/) /*: StorageAre
 
 
 export function sigTool(local /*: StorageArea */, nacl /*: typeof nacl*/) /*: SigTool */ {
-  function getKey() /*: Promise<SigningKey | null> */{
+  /**
+   * @returns { Promise<SigningKey | null> }
+   */
+  function getKey() {
     return local.get('signingKey').then(({ signingKey }) => chkKey(signingKey));
   }
 
