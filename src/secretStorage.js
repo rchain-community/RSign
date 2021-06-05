@@ -6,7 +6,7 @@
 
 import scrypt from 'scrypt.js'; // ISSUE: just use crypto.script?
 import crypto from 'crypto';
-import assert from 'assert';
+import assert from './assert';
 
 import { keccak256 } from 'js-sha3';
 

@@ -1,7 +1,7 @@
 /* global document, window */
+// @ts-check
 
-import nacl from 'tweetnacl';
-
+import { randomBytes } from 'crypto';
 import { options } from './sigTool.js';
 
-options(document, { chrome: window.chrome, browser: window.browser }, nacl);
+options(document, { chrome: window.chrome, browser: /** @type {any} */ (window).browser }, randomBytes);

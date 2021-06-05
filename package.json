@@ -48,8 +48,12 @@
   },
   "dependencies": {
     "@types/chrome": "^0.0.144",
+    "crypto-browserify": "^3.12.0",
+    "ethereumjs-util": "^7.0.10",
     "rchain-api": "github:rchain-community/rchain-api",
-    "tweetnacl": "^1.0.0"
+    "scrypt.js": "^0.3.0",
+    "stream-browserify": "^3.0.0",
+    "uuid-random": "^1.3.2"
   },
   "eslintConfig": {
     "extends": [

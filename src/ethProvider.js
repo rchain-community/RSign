@@ -2,7 +2,8 @@
 // @ts-check
 import { runInPage, RSignMessageType } from './inPage';
 import { sigTool, localStorage } from './sigTool.js';
-import nacl from 'tweetnacl'; // WARNING! powerful. TODO: separate from pure code
+import { randomBytes } from 'crypto'; // WARNING! powerful. TODO: separate from pure code
+import { getAddrFromPublicKey } from 'rchain-api';
 
 const { freeze } = Object;
 
@@ -38,8 +39,8 @@ function makeProvider(tool) {
       if (!key) {
         throw Error('no key available');
       }
-      console.log('TODO: convert public key to eth address');
-      return [key.pubKey];
+      console.log('got key:', { key });
+      return [key.ethAddr];
     }
   })
 }
@@ -50,14 +51,16 @@ function makeProvider(tool) {
  *   inject: (content: string) => void,
  *   onMessage: typeof chrome.runtime.onMessage,
  *   postMessage: typeof window.postMessage,
- *   nacl: typeof nacl,
- *   ua: { chrome: unknown, browser: unknown },
+ *   randomBytes: typeof randomBytes,
+ *   ua: UserAgent,
  * }} io
+ *
+ * @typedef { import('./sigTool').UserAgent } UserAgent
  */
-function start({ addEventListener, inject, nacl, onMessage, ua }) {
+function start({ addEventListener, inject, randomBytes, onMessage, ua }) {
   inject(`(${runInPage})();`);
 
-  const tool = sigTool(localStorage(ua), nacl);
+  const tool = sigTool(localStorage(ua), randomBytes);
 
   const provider = makeProvider(tool);
 
@@ -86,10 +89,6 @@ start({
   inject: (content) => injectScript(content, { document }),
   onMessage: chrome.runtime.onMessage,
   postMessage: window.postMessage.bind(window),
-  nacl,
-  ua: {
-    chrome: window.chrome,
-    // @ts-ignore TODO: remember what this is for; firefox extension API?
-    browser: window.browser
-  },
+  randomBytes,
+  ua: { chrome: window.chrome },
 });
