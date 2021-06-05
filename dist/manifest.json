@@ -28,6 +28,16 @@
   "content_scripts": [
     {
       "js": [
+        "ethProvider.js"
+      ],
+      "matches": [
+        "http://localhost:8080/*",
+        "http://127.0.0.1:8080/*",
+        "https://tgrospic.github.io/*"
+      ]
+    },
+    {
+      "js": [
         "pageRelay.js"
       ],
       "matches": [
