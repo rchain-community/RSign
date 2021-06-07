@@ -38,7 +38,7 @@ function makeProvider(tool) {
       if (!key) {
         throw Error('no key available');
       }
-      console.log('got key:', { key });
+      // console.log('got key:', { key });
       return [key.ethAddr];
     }
   })
@@ -64,15 +64,21 @@ function start({ addEventListener, inject, randomBytes, onMessage, ua }) {
   const provider = makeProvider(tool);
 
   addEventListener('message', async event => {
-    const { method, params } = event.data;
-    if (!(method in provider)) {
+    if (event.source !== window) { // WARNING: ambient window. TODO: thread.
+      console.warn('content script: unknown event.source');
       return false;
     }
-    console.log('@@@handling content script message...', event.data);
-    // TODO: handle exceptions
-    const result = await provider[method](params);
-    console.log('TODO: send result:', result);
-    postMessage(RSignMessageType, result);
+    const { method, params, q } = event.data;
+    if (!(method in provider)) {
+      console.debug('content script: unknown method', { method });
+      return false;
+    }
+    try {
+      const result = await provider[method](params);
+      event.source.postMessage({ a: q + 1, ok: true, result }, '*');
+    } catch (error) {
+      event.source.postMessage({ a: q + 1, ok: false, error }, '*');
+    }
   });
 
   onMessage.addListener((x, _sender, _sendResponse) => {

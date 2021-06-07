@@ -29,21 +29,46 @@ export const runInPage = () => {
      *  addEventListener: typeof window.addEventListener,
      *  dispatchEvent: typeof window.dispatchEvent,
      *  postMessage: typeof window.postMessage,
+     *  removeEventListener: typeof window.removeEventListener,
      * }} io
      */
     function install(target, { addEventListener, dispatchEvent, postMessage }) {
       // console.debug('install...');
       const { freeze } = Object;
 
+      let q = 1;
+
       target.ethereum = freeze({
         request: ({ method, params }) => {
-          console.log('@@@handling ethereum provider request:', { method, params });
-          const done = new Promise((resolve, _reject) => {
-            addEventListener(RSignMessageType, async (event) => {
-              resolve(event.data); // TODO: static type for RSignMessageType
-            });
+          console.log('RSign provider request:', { method, q });
+          const done = new Promise((resolve, reject) => {
+            /** @typedef {{ ok: true, result: unknown } | { ok: false, error: Error }} Outcome */
+            /** @param { MessageEvent<{ a: number } & Outcome> } event */
+            const handler = async (event) => {
+              // console.log('handler: event for me?', { eq: event.source === window });
+              if (event.source !== window) { // WARNING: ambient window. TODO: thread.
+                console.warn('window.ethereum request: unknown event.source', { q });
+                return false;
+              }
+              const data = event.data;
+              const { a } = event.data;
+              if (a !== q + 1) {
+                console.warn('window.ethereum request: bad sequence #:', { expected: q + 1, actual: a })
+                return false;
+              }
+              removeEventListener('message', handler);
+              if (data.ok) {
+                console.log('RSign provider completed', { method, q });
+                resolve(data.result);
+              } else {
+                console.log('RSign provider failed', { method, q, error: data.error.name });
+                reject(data.error);
+              }
+              q += 2;
+            }
+            addEventListener('message', handler);
           })
-          postMessage({ method, params }, '*');
+          postMessage({ method, params, q }, '*'); // TODO: review security of '*' origin
           return done;
         },
         /** @param { boolean } state */
@@ -68,5 +93,6 @@ export const runInPage = () => {
       addEventListener: window.addEventListener.bind(window),
       dispatchEvent: e => window.dispatchEvent(e),
       postMessage: (msg, origin, target = undefined) => window.postMessage(msg, origin, target),
+      removeEventListener: window.removeEventListener.bind(window),
     });
   };
