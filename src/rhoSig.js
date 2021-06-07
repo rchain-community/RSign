@@ -24,9 +24,9 @@ import {
 export default function popup(
   document /*: Document*/,
   ua /*: UserAgent */,
-  nacl /*: typeof nacl*/,
+  randomBytes /*: typeof @@@*/,
 ) {
-  const tool = sigTool(localStorage(ua), nacl);
+  const tool = sigTool(localStorage(ua), randomBytes);
   function the/*:: <T>*/(x /*: ?T*/) /*: T*/ { if (!x) { throw new Error(x); } return x; }
   const byId = id => the(document.getElementById(id));
 

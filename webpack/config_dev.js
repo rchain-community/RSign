@@ -17,7 +17,6 @@ module.exports = {
       // stub assert since npm package wants process (!?)
       "assert": require.resolve('../src/assert.js'),
       "stream": require.resolve("stream-browserify"),
-      "crypto": require.resolve("crypto-browserify"),
     },
   },
   plugins: [

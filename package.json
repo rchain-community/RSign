@@ -48,8 +48,9 @@
   },
   "dependencies": {
     "@types/chrome": "^0.0.144",
-    "crypto-browserify": "^3.12.0",
+    "ethereum-cryptography": "^0.1.3",
     "ethereumjs-util": "^7.0.10",
+    "randombytes": "^2.1.0",
     "rchain-api": "github:rchain-community/rchain-api",
     "scrypt.js": "^0.3.0",
     "stream-browserify": "^3.0.0",

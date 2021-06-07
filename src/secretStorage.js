@@ -5,8 +5,8 @@
 // @ts-check
 
 import scrypt from 'scrypt.js'; // ISSUE: just use crypto.script?
-import crypto from 'crypto';
 import assert from './assert';
+import { encrypt as AESencrypt, decrypt as AESdecrypt } from 'ethereum-cryptography/aes';
 
 import { keccak256 } from 'js-sha3';
 
@@ -109,10 +109,9 @@ export function decrypt(password, item) {
 
   const cipherKey = derivedKey.slice(0, 128 / 8);
   assert(item.crypto.cipher === 'aes-128-ctr');
-  const decipher = crypto.createDecipheriv(
-    item.crypto.cipher, cipherKey, Buffer.from(toBuf(item.crypto.cipherparams.iv)),
+  const privateKey = AESdecrypt(
+    toBuf(item.crypto.ciphertext), cipherKey, Buffer.from(toBuf(item.crypto.cipherparams.iv)),
   );
-  const privateKey = decipher.update(toBuf(item.crypto.ciphertext));
   return privateKey;
 }
 
@@ -147,9 +146,7 @@ export function encrypt(privateKey, password, randomBytes, uuidv4) {
     cipherparams: { iv: randomBytes(16) },
   };
 
-  const encipher = crypto.createCipheriv(cipher.cipher, cipherKey, cipher.cipherparams.iv);
-  const ciphertext = encipher.update(privateKey);
-  encipher.final().copy(ciphertext, ciphertext.length);
+  const ciphertext = AESencrypt(privateKey, cipherKey, toBuf(cipher.cipherparams.iv));
 
   const MACBody = Buffer.concat([
     derivedKey.slice(16, 32),

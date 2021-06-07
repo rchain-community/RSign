@@ -2,8 +2,7 @@
 // @ts-check
 import { runInPage, RSignMessageType } from './inPage';
 import { sigTool, localStorage } from './sigTool.js';
-import { randomBytes } from 'crypto'; // WARNING! powerful. TODO: separate from pure code
-import { getAddrFromPublicKey } from 'rchain-api';
+import randomBytes from 'randombytes'; // WARNING! powerful. TODO: separate from pure code
 
 const { freeze } = Object;
 
