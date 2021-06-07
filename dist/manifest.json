@@ -27,7 +27,22 @@
   },
   "content_scripts": [
     {
-      "js": ["pageRelay.js"],
+      "matches": [
+        "http://localhost:8080/*",
+        "http://127.0.0.1:8080/*",
+        "https://rgov1.netlify.app/*",
+        "https://tgrospic.github.io/*"
+      ],
+      "js": [
+        "ethProvider.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "js": [
+        "pageRelay.js"
+      ],
       "matches": [
         "http://localhost:8080/*",
         "http://127.0.0.1:8080/*",

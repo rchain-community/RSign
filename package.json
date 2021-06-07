@@ -10,13 +10,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack --config webpack/config_dev.js",
     "build": "webpack --config webpack/config_prod.js",
-    "lint": "eslint --format unix src/",
-    "coverage": "flow-coverage-report -i '*.js' -x 'node_modules/**' -t html -t json -t text --threshold 90",
-    "typecheck": "flow status --from emacs"
+    "lint": "yarn lint:types && yarn lint:eslint",
+    "lint-fix": "yarn lint:eslint --fix",
+    "lint:eslint": "eslint",
+    "lint:types": "tsc -p jsconfig.json"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dckc/RSign.git"
+    "url": "git+https://github.com/rchain-community/RSign.git"
   },
   "keywords": [
     "RChain",
@@ -26,22 +27,45 @@
   "author": "Dan Connolly",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/dckc/RSign/issues"
+    "url": "https://github.com/rchain-community/RSign/issues"
   },
-  "homepage": "https://github.com/dckc/RSign#readme",
+  "homepage": "https://github.com/rchain-community/RSign#readme",
   "devDependencies": {
-    "crx-webpack-plugin": "^0.1.5",
-    "eslint": "^5.4.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "flow-bin": "^0.80.0",
-    "flow-coverage-report": "^0.6.0",
-    "flow-interfaces-chrome": "^0.5.1",
-    "webpack": "^4.19.1",
-    "webpack-cli": "^3.1.0"
+    "@agoric/eslint-config": "^0.3.6",
+    "@agoric/eslint-plugin": "^0.3.2",
+    "crx-webpack-plugin": "^0.1.6",
+    "eslint": "^7.28.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-jsdoc": "^35.1.2",
+    "eslint-plugin-prettier": "^3.4.0",
+    "prettier": "^2.3.0",
+    "typescript": "^4.3.2",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.0"
   },
   "dependencies": {
-    "rchain-api": "github:dckc/rchain-api-1#a10c826",
-    "tweetnacl": "^1.0.0"
+    "@types/chrome": "^0.0.144",
+    "ethereum-cryptography": "^0.1.3",
+    "ethereumjs-util": "^7.0.10",
+    "randombytes": "^2.1.0",
+    "rchain-api": "github:rchain-community/rchain-api",
+    "scrypt.js": "^0.3.0",
+    "stream-browserify": "^3.0.0",
+    "uuid-random": "^1.3.2"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@agoric"
+    ],
+    "globals": {
+      "chrome": "readonly"
+    }
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "singleQuote": true
   }
 }

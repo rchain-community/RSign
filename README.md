@@ -2,6 +2,7 @@
 
 by Dan Connolly
 
+copyright (c) Dan Connolly and contributors 2021.
 copyright (c) RChain Cooperative 2018.
 Share and Enjoy under the terms of the Apache Software License.
 

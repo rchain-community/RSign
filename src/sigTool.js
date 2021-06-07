@@ -1,55 +1,73 @@
 /** sigTool -- signing key generation, storage, and usage
-@flow strict
  */
+// @ts-check
 
 /* global unescape, encodeURIComponent, HTMLInputElement, HTMLTextAreaElement */
 
-import { asStr } from './messageBus.js';
+import uuidv4 from 'uuid-random'; // WARNING: powerful. TODO: thread explicitly
+import { privateToPublic, Address } from 'ethereumjs-util';
+import * as SS from './secretStorage';
 
-const def = Object.freeze;
+const { freeze, keys } = Object;
 
-/*::
-
-// SigningKey is the format we use to save the key pair
-// with the secret key encrypted.
-export type SigningKey = {
-  label: string,
-  secretKey: {
-    // ISSUE: opaque type for hex?
-    nonce: string,
-    cipherText: string,
-  },
-  pubKey: string
+/** @param { unknown } x */
+function asStr(x) {
+  if (typeof x !== 'string') { return ''; }
+  return x;
 }
 
-interface SigTool {
-  // Generate and save key.
-  generate({ label: string, password: string }): Promise<SigningKey>,
-  // Get stored key.
-  getKey(): Promise<SigningKey | null>,
-  // Decrypt private key and use it to sign message.
-  signMessage(message: Uint8Array, signingKey: SigningKey, password: string): string
-}
+/**
+ * @typedef {{
+ *   generate(_: { label: string, password: string }): Promise<SigningKey>, // Generate and save key.
+ *   getKey(): Promise<SigningKey | null>, // Get stored key.
+ *   signMessage(message: Uint8Array, signingKey: SigningKey, password: string): string // Decrypt private key and use it to sign message.
+ * }} SigTool
+ *
+ * @typedef { SecretStorageV3<AES128CTR, SCrypt> & {
+ *   label: string,
+ *   pubKey: string,
+ *   ethAddr: string, // TODO: REVAddress?
+ * }} SigningKey
+ * @typedef { import('./secretStorage').AES128CTR } AES128CTR
+ * @typedef { import('./secretStorage').SCrypt } SCrypt
+ */
+/**
+ * @typedef { import('./secretStorage').SecretStorageV3<C,K> } SecretStorageV3<C,K>
+ * @template C
+ * @template K
+ */
 
-// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/StorageArea
-interface StorageArea {
-  get(key: string): Promise<{ [string]: mixed }>,
-  set(items: { [string]: mixed }): Promise<void>
-}
+/**
+ * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/StorageArea
+ *
+ * @typedef {{
+ *   get(key: string): Promise<Record<string, unknown>>,
+ *   set(items: Record<string, unknown>): Promise<void>
+ * }} StorageArea
+ */
 
-// Toward a portable chrome/firefox API (WIP).
-export type UserAgent = {
-  chrome: typeof chrome,
-  browser?: {
-    storage: {
-      local: StorageArea
-    }
-  }
-}
 
-*/
+/**
+ * Toward a portable chrome/firefox API (WIP).
+ * @typedef {{
+ *   chrome: typeof chrome,
+ *   browser?: {
+ *     storage: {
+ *       local: StorageArea
+ *     }
+ *   }
+ * }} UserAgent
+ */
 
-export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: typeof nacl*/) {
+/**
+ *
+ * @param { DocumentT } document
+ * @param { UserAgent } ua
+ * @param { typeof import('crypto').randomBytes } randomBytes
+ *
+ * @typedef { typeof document } DocumentT
+ */
+export function options(document, ua, randomBytes) {
   function the/*:: <T>*/(x /*: ?T*/) /*: T*/ { if (!x) { throw new Error(x); } return x; }
   const byId = id => the(document.getElementById(id));
 
@@ -59,7 +77,7 @@ export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: ty
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const tool = sigTool(localStorage(ua), nacl);
+    const tool = sigTool(localStorage(ua), randomBytes);
     tool.getKey()
       .then(showPubKey)
       .catch(oops => lose('get key', oops));
@@ -77,7 +95,10 @@ export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: ty
   });
 
 
-  function showPubKey(maybeKey /*: SigningKey | null*/) {
+  /**
+   * @param {SigningKey | null} maybeKey
+   */
+  function showPubKey(maybeKey) {
     if (!maybeKey) { return; }
     const { label, pubKey } = maybeKey;
     /* Assigning to params is the norm for DOM stuff. */
@@ -90,8 +111,11 @@ export function options(document /*: Document*/, ua /*: UserAgent*/, nacl /*: ty
 
 /**
  * Runtime check that this element is an input.
+ *
+ * @param { HTMLElement } elt
+ * @returns { HTMLInputElement | HTMLTextAreaElement }
  */
-export function input(elt /*: HTMLElement*/) /*: HTMLInputElement | HTMLTextAreaElement */ {
+export function input(elt) {
   if (!(elt instanceof HTMLInputElement || elt instanceof HTMLTextAreaElement)) {
     throw new TypeError(`not an input: ${elt.toString()}`);
   }
@@ -104,85 +128,124 @@ export function input(elt /*: HTMLElement*/) /*: HTMLInputElement | HTMLTextArea
  *
  * Produce promise-style API despite [chrome compatibility issues][1].
  *
+ * @param { UserAgent } ua
+ * @returns { StorageArea }
+ *
  * [1]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Chrome_incompatibilities
  */
-export function localStorage({ browser, chrome } /*: UserAgent*/) /*: StorageArea */{
-  return browser ? browser.storage.local : def({
+export function localStorage({ browser, chrome }) {
+  return browser ? browser.storage.local : freeze({
     set: items => asPromise(chrome, callback => chrome.storage.local.set(items, callback)),
     get: key => asPromise(chrome, callback => chrome.storage.local.get(key, callback)),
   });
 }
 
-
-export function sigTool(local /*: StorageArea */, nacl /*: typeof nacl*/) /*: SigTool */ {
-  function getKey() /*: Promise<SigningKey | null> */{
+/**
+ * @param { StorageArea } local
+ * @param { randomBytes } randomBytes
+ * @returns { SigTool }
+ */
+// @ts-ignore
+export function sigTool(local, randomBytes) {
+  /**
+   * @returns { Promise<SigningKey | null> }
+   */
+  function getKey() {
     return local.get('signingKey').then(({ signingKey }) => chkKey(signingKey));
   }
 
-  function chkKey(it /*: mixed*/) /*: SigningKey | null */ {
-    if (it === null) { return null; }
-    if (typeof it !== 'object') { return null; }
-    const { secretKey } = it;
-    if (!secretKey || typeof secretKey !== 'object') { return null; }
-    const { nonce } = secretKey;
-    if (typeof nonce !== 'string') { return null; }
-    const { cipherText } = secretKey;
-    if (typeof cipherText !== 'string') { return null; }
-    return {
-      label: asStr(it.label),
-      secretKey: { nonce, cipherText },
-      pubKey: asStr(it.pubKey),
-    };
+  /**
+   * @param { unknown } it
+   * @returns { SigningKey | null }
+   */
+  function chkKey(it) {
+    console.log('chkKey', { it });
+    /**
+     * @param {Set} as
+     * @param {Set} bs
+     * @returns
+     */
+    function eqSet(as, bs) {
+      if (as.size !== bs.size) return false;
+      for (const a of as) if (!bs.has(a)) return false;
+      return true;
+    }
+    /**
+     * @param {unknown} a
+     * @param {unknown} b
+     */
+    function sameShape(a, b) {
+      if (typeof a !== typeof b) { return false; }
+      if (typeof a !== 'object') { return true; }
+      // tsc isn't smart enough to know they're the same...
+      if (typeof b !== 'object') { return false; }
+      if (!a) { return null; }
+      if (!b) { return null; }
+      const props = new Set(...keys(a));
+      if (!eqSet(props, new Set(...keys(b)))) return false;
+      for (const p of props) {
+        if (!sameShape(a[p], b[p])) return false;
+      }
+      return true;
+    }
+    const extra = { label: 's', 'pubKey': 's', ethAddr: '0x...' };
+    if (!sameShape(it, { ...SS.testVectorScrypt, ...extra })) return null;
+    // @ts-ignore testVectorScrypt was statically checked
+    return it;
   }
 
-  function generate({ label, password }) {
-    const signingKey = encryptedKey(nacl.sign.keyPair(), { label, password });
-    return local.set({ signingKey }).then(() => signingKey);
-  }
-
-  function encryptedKey(keyPair, { label, password }) {
-    const sk = encryptWithNonce(keyPair.secretKey, passKey(password));
-
-    return {
-      label,
-      secretKey: {
-        nonce: b2h(sk.nonce),
-        cipherText: b2h(sk.cipherText),
-      },
-      pubKey: b2h(keyPair.publicKey),
-    };
+  async function generate({ label, password }) {
+    console.log('generate...');
+    const privateKey = randomBytes(32);
+    console.log('encrypt...');
+    const item = SS.encrypt(privateKey, password, randomBytes, uuidv4);
+    console.log('...encrypted');
+    const pubKey = privateToPublic(privateKey).toString('hex');
+    const ethAddr = Address.fromPrivateKey(privateKey).toString();
+    const signingKey = { ...item, label, pubKey, ethAddr };
+    console.log('generated:', { signingKey });
+    await local.set({ signingKey });
+    return signingKey;
   }
 
   /**
    * Hash text password to get bytes for secretbox key.
    */
   function passKey(password /*: string*/) /*: Uint8Array */{
+    // @ts-ignore
     return nacl.hash(utf8(password)).slice(0, nacl.secretbox.keyLength);
   }
 
   function encryptWithNonce(message /*: Uint8Array */, key) {
+    // @ts-ignore
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+    // @ts-ignore
     const cipherText = nacl.secretbox(message, nonce, key);
     return { cipherText, nonce };
   }
 
-  function signMessage(
-    message /*: Uint8Array */,
-    signingKey /*: SigningKey*/,
-    password /*: string*/,
-  ) {
+  /**
+   * @param {Uint8Array} message
+   * @param {SigningKey} signingKey
+   * @param {string} password
+   * @returns
+   */
+  function signMessage(message, signingKey, password) {
+    throw Error('TODO: port from ed25519 / nacl to secp256k1')
     const nonce = h2b(signingKey.secretKey.nonce);
     const box = h2b(signingKey.secretKey.cipherText);
+    // @ts-ignore
     const secretKey = nacl.secretbox.open(box, nonce, passKey(password));
 
     if (secretKey === null) {
       throw new Error('bad password');
     }
 
+    // @ts-ignore
     return b2h(nacl.sign.detached(message, secretKey));
   }
 
-  return def({ getKey, generate, signMessage });
+  return freeze({ getKey, generate, signMessage });
 }
 
 
